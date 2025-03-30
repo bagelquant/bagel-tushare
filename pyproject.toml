@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "bagel-tushare"
+version = "1.0.0"
+authors = [
+  { name="Yanzhong Huang", email="eric.yanzhong.huang@gmail.com" },
+]
+description = "A Python wrapper for Tushare, a Chinese financial data provider. The project provides a simple and easy-to-use automation tool for **downloading** financial data from Tushare, and **storing** the data in a local mysql database."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "pandas>=2.2.0",
+    "tushare>=1.4.0",
+    "pymysql>=1.1.1",
+    "sqlalchemy>=2.0.0",
+    "cryptography>=43.0.0"
+]   
+
+[project.urls]
+Homepage = "https://github.com/bagelquant/bagel-tushare"
+Issues = "https://github.com/bagelquant/bagel-tushare/issues"
+
