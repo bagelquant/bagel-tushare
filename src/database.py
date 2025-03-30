@@ -31,8 +31,8 @@ def get_engine(host: str,
 def create_log_table(engine: Engine) -> None:
     """
     Creates a `log` table in the database if it does not already exist. The `log` table
-    contains information about updates, including the table name, a message, an
-    optional trade date, and a timestamp indicating when the log entry was created.
+    contains information about updates, including the table name, a message,
+    and a timestamp indicating when the log entry was created.
 
     :param engine: SQLAlchemy Engine instance used to connect to the database.
     :type engine: Engine
@@ -46,8 +46,27 @@ def create_log_table(engine: Engine) -> None:
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 update_table VARCHAR(20) NOT NULL,
                 message TEXT NOT NULL,
-                trade_date DATE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """)
         )
+
+
+def insert_log(engine: Engine,
+               table_name: str,
+               message: str) -> None:
+    """
+    Inserts a log entry into the `log` table in the database.
+
+    :param engine: SQLAlchemy Engine instance used to connect to the database.
+    :param table_name: The name of the table being updated (logged entry).
+    :param message: The log message describing the update.
+    :return: None
+    """
+    with engine.begin() as conn:
+        conn.execute(text(
+            f"""
+            INSERT INTO log (update_table, message)
+            VALUES ('{table_name}', '{message}')
+            """
+        ))
