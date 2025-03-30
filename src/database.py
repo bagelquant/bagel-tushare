@@ -13,14 +13,16 @@ def get_engine(host: str,
                password: str,
                database: str) -> Engine:
     """
-    Create a SQLAlchemy engine for connecting to a MySQL database.
+    Creates and returns a SQLAlchemy engine using the provided database
+    connection parameters. The engine allows interaction with the specified
+    database using SQLAlchemy functionalities.
 
-    :param host: Hostname of the database server.
-    :param port: Port number of the database server.
-    :param user: Username for authentication.
-    :param password: Password for authentication.
+    :param host: Database server hostname or IP address.
+    :param port: Port number on which the database server is listening.
+    :param user: Username for database authentication.
+    :param password: Password corresponding to the database user.
     :param database: Name of the database to connect to.
-    :return: SQLAlchemy engine object.
+    :return: A SQLAlchemy Engine instance configured with the provided connection details.
     """
     connection_string = f"mysql+pymysql://{user}:{password}@{host}:{port}/{database}"
     return create_engine(connection_string)
@@ -28,9 +30,12 @@ def get_engine(host: str,
 
 def create_log_table(engine: Engine) -> None:
     """
-    Create a log table in the database if it doesn't exist.
+    Creates a `log` table in the database if it does not already exist. The `log` table
+    contains information about updates, including the table name, a message, an
+    optional trade date, and a timestamp indicating when the log entry was created.
 
-    :param engine: SQLAlchemy engine object.
+    :param engine: SQLAlchemy Engine instance used to connect to the database.
+    :type engine: Engine
     :return: None
     """
 

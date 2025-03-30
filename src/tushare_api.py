@@ -19,13 +19,14 @@ def download(token: str,
              params: dict | None = None,
              fields: list[str] | None = None) -> DataFrame | None:
     """
-    Download data from Tushare API.
+    Downloads data by querying an API using the specified token and parameters.
 
-    :param api_name: tushare api name
-    :param token: Tushare token for authentication.
-    :param params: A dictionary of parameters to pass to the API endpoint.
-    :param fields: A list of fields to retrieve from the API.
-    :return: A DataFrame containing the data retrieved from the API.
+    :param token: The authentication token for accessing the API.
+    :param api_name: The name of the API to query data from.
+    :param params: Optional dictionary of query parameters to include in the API call.
+    :param fields: Optional list of field names to explicitly retrieve from the API.
+    :return: A DataFrame containing data from the query, or None if no data is
+        available.
     """
     pro = pro_api(token)
     if params is None:
