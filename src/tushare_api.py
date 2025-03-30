@@ -21,6 +21,7 @@ def download(token: str,
     """
     Download data from Tushare API.
 
+    :param api_name: tushare api name
     :param token: Tushare token for authentication.
     :param params: A dictionary of parameters to pass to the API endpoint.
     :param fields: A list of fields to retrieve from the API.
@@ -32,4 +33,3 @@ def download(token: str,
     if fields is not None:
         params["fields"] = ",".join(fields)
     return pro.query(api_name, **params)
-
