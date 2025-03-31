@@ -24,7 +24,7 @@ class TestTushareAPI(TestCase):
         """Test downloading data without specifying fields."""
         api_name = "daily"
         params = {"ts_code": "000001.SZ", "trade_date": "20250325"}
-        df = tushare_download(self.token, api_name, params, fields=None)
+        df = tushare_download(self.token, api_name, params)
         self.assertIsNotNone(df)
         self.assertGreater(df.shape[1], 0)  # Ensure columns are present in the response
 
@@ -34,4 +34,4 @@ class TestTushareAPI(TestCase):
         params = {"ts_code": "000001.SZ", "trade_date": "20250325"}
         invalid_token = "INVALID_TOKEN"
         with self.assertRaises(Exception):
-            tushare_download(invalid_token, api_name, params, fields=None)
+            tushare_download(invalid_token, api_name, params)
