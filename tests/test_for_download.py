@@ -1,10 +1,12 @@
 import json
 import unittest
-import pandas as pd
 
+import pandas as pd
 from sqlalchemy import text
-from src.queries.for_download import query_latest_trade_date_by_table_name, query_latest_trade_date_by_ts_code
 from src.database import get_engine
+from src.queries.for_download import (query_latest_trade_date_by_table_name,
+                                      query_latest_trade_date_by_ts_code,
+                                      query_trade_cal)
 from src.tushare_api import tushare_download
 
 
@@ -55,3 +57,24 @@ class TestForDownload(unittest.TestCase):
         # drop table
         with self.engine.begin() as conn:
             conn.execute(text(f"DROP TABLE {self.table_name}"))
+
+    def test_query_trade_cal(self):
+        """Test querying the trade calendar from the database."""
+        # Create sample trade calendar data
+        trade_cal_data = pd.DataFrame({"cal_date": ["2020-01-01", "2020-01-02", "2020-01-03"]})
+        trade_cal_data["cal_date"] = pd.to_datetime(trade_cal_data["cal_date"])
+
+        # Save to database
+        trade_cal_data.to_sql("trade_cal", self.engine, if_exists="replace", index=False)
+
+        # Query trade calendar
+        cal_dates = query_trade_cal(self.engine)
+
+        # Convert results to datetime
+        expected_dates = trade_cal_data["cal_date"].to_list()
+
+        self.assertEqual(cal_dates, expected_dates)
+
+        # Drop table
+        with self.engine.begin() as conn:
+            conn.execute(text("DROP TABLE trade_cal"))

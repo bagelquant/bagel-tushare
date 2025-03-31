@@ -50,3 +50,20 @@ def query_latest_trade_date_by_ts_code(engine: Engine,
     with engine.connect() as conn:
         latest_date: datetime = conn.execute(query, {"ts_code": ts_code}).fetchone()[0]
         return latest_date if latest_date else None
+
+
+def query_trade_cal(engine: Engine) -> list[datetime]:
+    """
+    Query trade calendar dates from the database.
+
+    This function retrieves financial trading calendar dates from a database
+    using the provided SQLAlchemy engine. The returned dates indicate the
+    specific calendar days of trading activities.
+
+    :param engine: SQLAlchemy database engine used to connect to the database.
+    :return: A list of datetime objects representing trading calendar dates.
+    """
+    query = text("SELECT cal_date FROM trade_cal")
+    with engine.connect() as conn:
+        cal_dates = conn.execute(query).fetchall()
+        return sorted([_[0] for _ in cal_dates] if cal_dates else [])
