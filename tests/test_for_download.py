@@ -5,7 +5,7 @@ import pandas as pd
 from sqlalchemy import text
 from src.queries.for_download import query_latest_trade_date_by_table_name, query_latest_trade_date_by_ts_code
 from src.database import get_engine
-from src.tushare_api import download
+from src.tushare_api import tushare_download
 
 
 class TestForDownload(unittest.TestCase):
@@ -21,9 +21,9 @@ class TestForDownload(unittest.TestCase):
         # download test data
         self.code = "000001.SZ"
         self.table_name = "daily"
-        self.download_df = download(self.token,
-                                    self.table_name,
-                                    {"ts_code": self.code,
+        self.download_df = tushare_download(self.token,
+                                            self.table_name,
+                                            {"ts_code": self.code,
                                      "start_date": "20200101",
                                      "end_date": "20250101"})
         self.download_df["trade_date"] = pd.to_datetime(self.download_df["trade_date"])

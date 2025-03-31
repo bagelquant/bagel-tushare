@@ -14,10 +14,10 @@ from pandas import DataFrame
 from tushare import pro_api
 
 
-def download(token: str,
-             api_name: str,
-             params: dict | None = None,
-             fields: list[str] | None = None) -> DataFrame | None:
+def tushare_download(token: str,
+                     api_name: str,
+                     params: dict | None = None,
+                     fields: list[str] | None = None) -> DataFrame | None:
     """
     Downloads data by querying an API using the specified token and parameters.
 
