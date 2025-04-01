@@ -166,10 +166,12 @@ def update_by_date(engine: Engine,
     :return: This function returns nothing.
     """
     # latest date in database
-    latest_date = query_latest_trade_date_by_table_name(engine, api_name) + pd.Timedelta(days=1)
+    latest_date = query_latest_trade_date_by_table_name(engine, api_name)
 
     if not latest_date:
         latest_date = datetime(2000, 1, 1)
+    else:
+        latest_date = latest_date + pd.Timedelta(days=1)
     if end_date < latest_date:
         print(f'{api_name} already up to date')
         return
