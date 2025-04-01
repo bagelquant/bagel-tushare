@@ -60,11 +60,12 @@ def query_latest_f_ann_date_by_ts_code(engine: Engine,
     query = text(f"""
     SELECT MAX(f_ann_date) as latest_date 
     FROM {table_name} 
-    WHERE ts_code = {ts_code}
+    WHERE ts_code = "{ts_code}"
     """)
     try:
         with engine.connect() as conn:
             latest_date: datetime = conn.execute(query).fetchone()[0]
+            print(latest_date)
             return latest_date if latest_date else None
     except ProgrammingError:
         return None

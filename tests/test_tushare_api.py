@@ -1,7 +1,7 @@
 import json
 from unittest import TestCase
 
-from src.tushare_api import tushare_download
+from bageltushare import tushare_download
 
 
 class TestTushareAPI(TestCase):

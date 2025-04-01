@@ -1,7 +1,7 @@
 import json
 from unittest import TestCase
 
-from src.database import get_engine, create_log_table, text, insert_log, create_index
+from bageltushare import get_engine, create_log_table, text, insert_log, create_index
 
 
 class TestDatabase(TestCase):

@@ -39,8 +39,9 @@ Downloads financial data using the Tushare API.
 - `pandas.DataFrame | None`: A dataframe containing the retrieved data or `None` if no data is available.
 
 #### Usage Example:
+
 ```python
-from tushare_api import tushare_download
+from bageltushare.tushare_api import tushare_download
 
 data = tushare_download(
     token="YOUR_TUSHARE_TOKEN",
@@ -68,8 +69,9 @@ Establishes a connection to a database using SQLAlchemy.
 - `Engine`: SQLAlchemy engine instance for connecting to the database.
 
 #### Usage Example:
+
 ```python
-from database import get_engine
+from bageltushare.database import get_engine
 
 engine = get_engine(
     host="127.0.0.1",
@@ -93,8 +95,9 @@ Creates a `log` table to store updates and logs related to operations.
 - `None`
 
 #### Usage Example:
+
 ```python
-from database import create_log_table
+from bageltushare.database import create_log_table
 
 create_log_table(engine)
 ```
@@ -114,8 +117,9 @@ Logs an entry into the `log` table.
 - `None`
 
 #### Usage Example:
+
 ```python
-from database import insert_log
+from bageltushare.database import insert_log
 
 insert_log(engine, table_name="daily_data", message="Data updated successfully.")
 ```
@@ -134,8 +138,9 @@ Creates indices on specified columns of a table to optimize database queries.
 - `None`
 
 #### Usage Example:
+
 ```python
-from database import create_index
+from bageltushare.database import create_index
 
 create_index(engine, table_name="daily_data")
 ```

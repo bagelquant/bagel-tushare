@@ -27,12 +27,12 @@ from sqlalchemy import create_engine
 from datetime import datetime
 
 
-from tushare_api import tushare_download
-from database import insert_log
-from queries import (query_trade_cal,
-                     query_latest_f_ann_date_by_ts_code,
-                     query_latest_trade_date_by_table_name,
-                     query_code_list)
+from bageltushare.tushare_api import tushare_download
+from bageltushare.database import insert_log
+from bageltushare.queries import (query_trade_cal,
+                                  query_latest_f_ann_date_by_ts_code,
+                                  query_latest_trade_date_by_table_name,
+                                  query_code_list)
 from concurrent.futures import ProcessPoolExecutor
 
 

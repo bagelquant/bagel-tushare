@@ -3,8 +3,8 @@ from unittest import TestCase
 
 from sqlalchemy.engine import Engine
 
-from src.download import download
-from src.database import get_engine, create_log_table
+from bageltushare.download import download
+from bageltushare import get_engine, create_log_table
 
 
 class TestDownload(TestCase):

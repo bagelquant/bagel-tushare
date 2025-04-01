@@ -3,12 +3,12 @@ import unittest
 
 import pandas as pd
 from sqlalchemy import text
-from src.database import get_engine
-from src.queries.for_download import (query_latest_trade_date_by_table_name,
-                                      query_latest_trade_date_by_ts_code,
-                                      query_trade_cal,
-                                      query_code_list)
-from src.tushare_api import tushare_download
+from bageltushare import get_engine
+from bageltushare.queries.for_download import (query_latest_trade_date_by_table_name,
+                                               query_latest_trade_date_by_ts_code,
+                                               query_trade_cal,
+                                               query_code_list)
+from bageltushare import tushare_download
 
 
 class TestForDownload(unittest.TestCase):
