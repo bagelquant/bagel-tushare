@@ -65,7 +65,6 @@ def query_latest_f_ann_date_by_ts_code(engine: Engine,
     try:
         with engine.connect() as conn:
             latest_date: datetime = conn.execute(query).fetchone()[0]
-            print(latest_date)
             return latest_date if latest_date else None
     except ProgrammingError:
         return None
