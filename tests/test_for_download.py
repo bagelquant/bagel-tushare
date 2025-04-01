@@ -6,7 +6,8 @@ from sqlalchemy import text
 from src.database import get_engine
 from src.queries.for_download import (query_latest_trade_date_by_table_name,
                                       query_latest_trade_date_by_ts_code,
-                                      query_trade_cal)
+                                      query_trade_cal,
+                                      query_code_list)
 from src.tushare_api import tushare_download
 
 
@@ -26,11 +27,10 @@ class TestForDownload(unittest.TestCase):
         self.download_df = tushare_download(self.token,
                                             self.table_name,
                                             {"ts_code": self.code,
-                                     "start_date": "20200101",
-                                     "end_date": "20250101"})
+                                             "start_date": "20200101",
+                                             "end_date": "20250101"})
         self.download_df["trade_date"] = pd.to_datetime(self.download_df["trade_date"])
         self.latest_trade_date = self.download_df["trade_date"].max()
-
 
     def test_query_latest_trade_date_by_table_name(self):
         """Test querying the latest trade date from a table."""
@@ -78,3 +78,23 @@ class TestForDownload(unittest.TestCase):
         # Drop table
         with self.engine.begin() as conn:
             conn.execute(text("DROP TABLE trade_cal"))
+
+    def test_query_code_list(self):
+        """Test querying stock codes from the stock_basic table."""
+        # Create sample stock_basic data
+        stock_basic_data = pd.DataFrame({"ts_code": ["000001.SZ", "000002.SZ", "000003.SZ"]})
+
+        # Save to database
+        stock_basic_data.to_sql("stock_basic", self.engine, if_exists="replace", index=False)
+
+        # Query stock codes
+        code_list = query_code_list(self.engine)
+
+        # Expected result
+        expected_codes = stock_basic_data["ts_code"].to_list()
+
+        self.assertEqual(code_list, expected_codes)
+
+        # Drop table
+        with self.engine.begin() as conn:
+            conn.execute(text("DROP TABLE stock_basic"))

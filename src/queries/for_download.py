@@ -14,10 +14,10 @@ In this module, we will have the queries for both of them.
 - query_latest_trade_date_by_table_name
 - query_latest_trade_date_by_ts_code
 """
-
+from datetime import datetime
 from sqlalchemy.engine import Engine
 from sqlalchemy.sql import text
-from datetime import datetime
+from sqlalchemy.exc import ProgrammingError
 
 
 def query_latest_trade_date_by_table_name(engine: Engine,
@@ -30,9 +30,44 @@ def query_latest_trade_date_by_table_name(engine: Engine,
     :return: The latest trade_date.
     """
     query = text(f"SELECT MAX(trade_date) as latest_date FROM {table_name}")
-    with engine.connect() as conn:
-        latest_date: datetime = conn.execute(query).fetchone()[0]
-        return latest_date if latest_date else None
+    try:
+        with engine.connect() as conn:
+            latest_date: datetime = conn.execute(query).fetchone()[0]
+            return latest_date if latest_date else None
+    except ProgrammingError:
+        # table not created yet
+        return None
+
+
+def query_latest_f_ann_date_by_ts_code(engine: Engine,
+                            table_name: str,
+                            ts_code: str) -> datetime | None:
+    """
+    Queries the latest financial announcement date from the specified table.
+    This function connects to the database using the provided SQLAlchemy engine,
+    runs a query to fetch the maximum value of the `f_ann_date` field from the
+    given table, and returns the result as a datetime object. If the query fails
+    or the result is None, the function returns None.
+
+    :param ts_code:
+    :param engine: The SQLAlchemy engine to use for connecting to the database.
+    :param table_name: The name of the table from which to query the latest
+        financial announcement date.
+    :return: The latest financial announcement date as a datetime object, or None
+        if no date is available or an error occurs.
+    :raises ProgrammingError: If there is an issue executing the query.
+    """
+    query = text(f"""
+    SELECT MAX(f_ann_date) as latest_date 
+    FROM {table_name} 
+    WHERE ts_code = {ts_code}
+    """)
+    try:
+        with engine.connect() as conn:
+            latest_date: datetime = conn.execute(query).fetchone()[0]
+            return latest_date if latest_date else None
+    except ProgrammingError:
+        return None
 
 
 def query_latest_trade_date_by_ts_code(engine: Engine,
@@ -46,13 +81,18 @@ def query_latest_trade_date_by_ts_code(engine: Engine,
     :param ts_code: The ts_code to filter the query.
     :return: The latest trade_date for the given ts_code.
     """
-    query = text(f"SELECT MAX(trade_date) as latest_date FROM {table_name} WHERE ts_code = :ts_code")
-    with engine.connect() as conn:
-        latest_date: datetime = conn.execute(query, {"ts_code": ts_code}).fetchone()[0]
-        return latest_date if latest_date else None
+    query = text(f"SELECT MAX(trade_date) as latest_date FROM {table_name} WHERE ts_code = {ts_code}")
+    try:
+        with engine.connect() as conn:
+            latest_date: datetime = conn.execute(query, {"ts_code": ts_code}).fetchone()[0]
+            return latest_date if latest_date else None
+    except ProgrammingError:
+        return None
 
 
-def query_trade_cal(engine: Engine) -> list[datetime]:
+def query_trade_cal(engine: Engine,
+                    start_date: datetime,
+                    end_date: datetime) -> list[datetime]:
     """
     Query trade calendar dates from the database.
 
@@ -61,9 +101,34 @@ def query_trade_cal(engine: Engine) -> list[datetime]:
     specific calendar days of trading activities.
 
     :param engine: SQLAlchemy database engine used to connect to the database.
+    :param start_date: The starting date for the calendar query.
+    :param end_date: The ending date for the calendar query.
     :return: A list of datetime objects representing trading calendar dates.
     """
-    query = text("SELECT cal_date FROM trade_cal")
+    query = text(f"""
+    SELECT cal_date FROM trade_cal 
+    WHERE is_open = 1 
+    AND cal_date BETWEEN "{start_date.strftime('%Y-%m-%d')}" AND "{end_date.strftime('%Y-%m-%d')}"
+    ORDER BY cal_date
+    """)
     with engine.connect() as conn:
         cal_dates = conn.execute(query).fetchall()
-        return sorted([_[0] for _ in cal_dates] if cal_dates else [])
+        return [_[0] for _ in cal_dates] if cal_dates else []
+
+
+def query_code_list(engine: Engine) -> list[str]:
+    """
+    Fetches a list of stock codes from the stock_basic table using the provided database engine.
+
+    The function performs a SQL query to extract the `ts_code` column values from
+    the `stock_basic` table. It establishes a connection to the database using the
+    provided engine, executes the query, retrieves the results, and returns the
+    list of stock codes. If no results are found, it returns an empty list.
+
+    :param engine: The SQLAlchemy Engine instance for connecting to the database.
+    :return: A list of stock codes extracted from the `stock_basic` table.
+    """
+    query = text("SELECT ts_code FROM stock_basic")
+    with engine.connect() as conn:
+        ts_codes = conn.execute(query).fetchall()
+        return [_[0] for _ in ts_codes] if ts_codes else []
