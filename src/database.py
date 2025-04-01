@@ -107,8 +107,6 @@ def create_index(engine: Engine,
         existing_indexes = conn.execute(text(query_existing)).fetchall()
         existing_indexes = [_[2] for _ in existing_indexes]
 
-        print(existing_indexes)
-
         # create index
         for index in index_list:
             if index in columns:
