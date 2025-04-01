@@ -1,7 +1,7 @@
 import json
 from unittest import TestCase
 
-from src.database import get_engine, create_log_table, text, insert_log
+from src.database import get_engine, create_log_table, text, insert_log, create_index
 
 
 class TestDatabase(TestCase):
@@ -65,3 +65,8 @@ class TestDatabase(TestCase):
         with engine.begin() as conn:
             logs = conn.execute(text("SELECT * FROM log")).fetchall()
             self.assertEqual(len(logs), 3)
+
+
+    def test_create_index(self):
+        engine = get_engine(**self.config)
+        create_index(engine, "daily")

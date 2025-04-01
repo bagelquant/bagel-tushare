@@ -5,6 +5,7 @@ Database connection and query execution module.
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.sql import text
+from sqlalchemy.exc import OperationalError
 
 
 def get_engine(host: str,
@@ -70,3 +71,62 @@ def insert_log(engine: Engine,
             VALUES ('{table_name}', '{message}')
             """
         ))
+
+
+def create_index(engine: Engine,
+                 table_name: str) -> None:
+    """
+    Creates an index on the specified table in the database.
+
+    The function generates a SQL query to create an index on the table's
+    columns listed in the `index_list`. The query is executed using the
+    provided database engine within a transaction, ensuring changes only
+    take effect if the execution succeeds.
+
+    :param engine: A SQLAlchemy Engine object that connects to the database.
+    :param table_name: The name of the table on which the index will be created.
+    :return: None
+    """
+    index_list = ['trade_date', 'f_ann_date', 'end_date', 'ts_code']
+    # get columns
+    query_columns = f"""
+    SELECT COLUMN_NAME 
+    FROM INFORMATION_SCHEMA.COLUMNS 
+    WHERE TABLE_NAME = '{table_name}'
+    """
+
+    # get existing indexes
+    query_existing = f"""
+    SHOW INDEX FROM {table_name}
+    """
+
+    with engine.begin() as conn:
+        columns = conn.execute(text(query_columns)).fetchall()
+        columns = [_[0] for _ in columns]
+
+        existing_indexes = conn.execute(text(query_existing)).fetchall()
+        existing_indexes = [_[2] for _ in existing_indexes]
+
+        print(existing_indexes)
+
+        # create index
+        for index in index_list:
+            if index in columns:
+                # check existing
+                if f"idx_{table_name}_{index}" in existing_indexes:
+                    continue
+
+                if index == 'ts_code':
+                    # ts_code is TEXT not specify length
+                    query_create_index = f"""
+                    ALTER TABLE {table_name}
+                    MODIFY COLUMN ts_code VARCHAR(20),
+                    ADD INDEX idx_{table_name}_{index} (ts_code);
+                    """
+                else:
+                    query_create_index = f"""
+                    CREATE INDEX idx_{table_name}_{index} ON {table_name} ({index});
+                    """
+                conn.execute(text(query_create_index))
+            else:
+                continue
