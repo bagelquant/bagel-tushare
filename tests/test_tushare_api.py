@@ -1,13 +1,13 @@
 import json
 from unittest import TestCase
 
-from bageltushare import tushare_download
+from src.bageltushare import tushare_download
 
 
 class TestTushareAPI(TestCase):
 
     def setUp(self):
-        with open("test_config.json") as f:
+        with open("tests/test_config.json") as f:
             self.token = json.load(f)["token"]
 
     def test_download(self):
@@ -17,8 +17,8 @@ class TestTushareAPI(TestCase):
         fields = ["ts_code", "trade_date", "open", "high", "low", "close", "vol"]
         df = tushare_download(self.token, api_name, params, fields)
         self.assertIsNotNone(df)
-        self.assertEqual(df.shape[0], 1)
-        self.assertEqual(df.shape[1], 7)
+        self.assertEqual(df.shape[0], 1)  # type: ignore
+        self.assertEqual(df.shape[1], 7)  # type: ignore
 
     def test_download_no_fields(self):
         """Test downloading data without specifying fields."""
@@ -26,7 +26,7 @@ class TestTushareAPI(TestCase):
         params = {"ts_code": "000001.SZ", "trade_date": "20250325"}
         df = tushare_download(self.token, api_name, params)
         self.assertIsNotNone(df)
-        self.assertGreater(df.shape[1], 0)  # Ensure columns are present in the response
+        self.assertGreater(df.shape[1], 0)  # type: ignore
 
     def test_download_invalid_token(self):
         """Test downloading data with an invalid token."""

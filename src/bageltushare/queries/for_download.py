@@ -85,6 +85,7 @@ def query_latest_trade_date_by_ts_code(engine: Engine,
     try:
         with engine.connect() as conn:
             latest_date: datetime = conn.execute(query, {"ts_code": ts_code}).fetchone()[0]
+            print(f"Latest trade date for {ts_code}: {latest_date}, table: {table_name}, ts_code: {ts_code}")
             return latest_date if latest_date else None
     except ProgrammingError:
         return None

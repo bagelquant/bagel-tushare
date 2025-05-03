@@ -78,7 +78,7 @@ def download(engine: Engine,
     try_count = 1
     try:
         df = tushare_download(token, api_name, params, fields)
-        df = _convert_date_column(df)
+        df = _convert_date_column(df)  # type: ignore
         df.to_sql(api_name, engine, if_exists="replace", index=False)
         print(f"Successfully downloaded {api_name} data")
     except Exception as e:
@@ -125,7 +125,7 @@ def _single_date_update(engine_url: str,
     while try_count < retry:
         try:
             df = tushare_download(token, api_name, params, fields)
-            df = _convert_date_column(df)
+            df = _convert_date_column(df)  # type: ignore
             df.to_sql(api_name, engine, if_exists="append", index=False)
             break
         except Exception as e:
@@ -244,7 +244,7 @@ def _single_update_by_code(engine_url: str,
     while try_count <= retry:
         try:
             df = tushare_download(token, api_name, params, fields)
-            df = _convert_date_column(df)
+            df = _convert_date_column(df)  # type: ignore
             df.to_sql(api_name, engine, if_exists="append", index=False)
             break
         except Exception as e:

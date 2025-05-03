@@ -1,12 +1,12 @@
 import json
 from unittest import TestCase
 
-from bageltushare import get_engine, create_log_table, text, insert_log, create_index
+from src.bageltushare.database import get_engine, create_log_table, text, insert_log, create_index
 
 
 class TestDatabase(TestCase):
     def setUp(self):
-        with open("test_config.json") as f:
+        with open("tests/test_config.json") as f:
             self.config = json.load(f)["database"]
 
     def test_get_engine(self):
@@ -69,4 +69,18 @@ class TestDatabase(TestCase):
 
     def test_create_index(self):
         engine = get_engine(**self.config)
+        # create the table daily
+        with engine.begin() as conn:
+            conn.execute(text("DROP TABLE IF EXISTS daily"))
+            conn.execute(
+                text(
+                    """
+                    CREATE TABLE daily (
+                        id INT PRIMARY KEY,
+                        trade_date DATE,
+                        value FLOAT
+                    )
+                    """
+                )
+            )
         create_index(engine, "daily")

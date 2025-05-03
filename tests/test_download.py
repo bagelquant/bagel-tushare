@@ -3,15 +3,15 @@ from unittest import TestCase
 
 from sqlalchemy.engine import Engine
 
-from bageltushare.download import download
-from bageltushare import get_engine, create_log_table
+from src.bageltushare.download import download
+from src.bageltushare import get_engine, create_log_table
 
 
 class TestDownload(TestCase):
 
     def setUp(self):
         # connect to database
-        with open("test_config.json") as f:
+        with open("tests/test_config.json") as f:
             config = json.load(f)
             self.config = config["database"]
             self.token = config["token"]
