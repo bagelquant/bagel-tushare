@@ -1,4 +1,7 @@
-# bagel-tushare
+# bagel-tushare (Archived, version 1.0.4)
+
+> [!WARNING]
+> This version has been archived and is no longer maintained. New version is implemented in OOP style and focus on efficiency.
 
 Author: Yanzhong(Eric) Huang [bagelquant](https://github.com/bagelquant)
 
