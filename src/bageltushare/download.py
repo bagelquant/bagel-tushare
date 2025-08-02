@@ -27,12 +27,12 @@ from sqlalchemy import create_engine
 from datetime import datetime
 
 
-from bageltushare.tushare_api import tushare_download
-from bageltushare.database import insert_log
-from bageltushare.queries import (query_trade_cal,
-                                  query_latest_f_ann_date_by_ts_code,
-                                  query_latest_trade_date_by_table_name,
-                                  query_code_list)
+from .tushare_api import tushare_download
+from .database import insert_log
+from .queries import (query_trade_cal,
+                      query_latest_f_ann_date_by_ts_code,
+                      query_latest_trade_date_by_table_name,
+                      query_code_list)
 from concurrent.futures import ProcessPoolExecutor
 
 
@@ -77,10 +77,32 @@ def download(engine: Engine,
     """
     try_count = 1
     try:
-        df = tushare_download(token, api_name, params, fields)
-        df = _convert_date_column(df)  # type: ignore
-        df.to_sql(api_name, engine, if_exists="replace", index=False)
-        print(f"Successfully downloaded {api_name} data")
+        df_new = tushare_download(token, api_name, params, fields)
+        df_new = _convert_date_column(df_new)  # type: ignore
+
+        # Read existing data from database
+        try:
+            df_existing = pd.read_sql_table(api_name, engine)
+        except Exception:
+            df_existing = pd.DataFrame()
+
+
+        # Compare columns for new rows
+        if api_name == "stock_basic" and "ts_code" in df_new.columns:
+            compare_cols = ["ts_code"]
+        else:
+            compare_cols = df_new.columns.tolist()
+        if not df_existing.empty:
+            merged = df_new.merge(df_existing, on=compare_cols, how="left", indicator=True)
+            df_to_insert = merged[merged["_merge"] == "left_only"].drop(columns=["_merge"])
+        else:
+            df_to_insert = df_new
+
+        if not df_to_insert.empty:
+            df_to_insert.to_sql(api_name, engine, if_exists="append", index=False)
+            print(f"Inserted {len(df_to_insert)} new rows into {api_name}")
+        else:
+            print(f"No new rows to insert for {api_name}")
     except Exception as e:
         error_msg = f"Error downloading {api_name}: {e}"
         insert_log(engine, table_name=api_name, message=error_msg)
@@ -114,6 +136,7 @@ def _single_date_update(engine_url: str,
     :param retry: Number of retry attempts in case of failure. Defaults to 3.
     :return: None
     """
+    print(f"Updating {api_name} for {trade_date}")
     # create a new engine using existing engine (multiprocess needs separate engine)
     engine = create_engine(engine_url)
 
@@ -129,6 +152,7 @@ def _single_date_update(engine_url: str,
             df.to_sql(api_name, engine, if_exists="append", index=False)
             break
         except Exception as e:
+            print(f"Error downloading {api_name} for {trade_date}: {e}, retrying...")
             try_count += 1
             if try_count < retry:
                 sleep(60)
@@ -189,7 +213,7 @@ def update_by_date(engine: Engine,
         fields_list = [fields for _ in trade_cal]
         retries = [retry for _ in trade_cal]
 
-        results = list(executor.map(_single_date_update,
+        list(executor.map(_single_date_update,
                                engine_urls,
                                tokens,
                                api_names,
@@ -224,6 +248,7 @@ def _single_update_by_code(engine_url: str,
     :param retry: Number of retry attempts in case of failure. Defaults to 3.
     :return: None
     """
+    print(f"Updating {api_name} for {ts_code}")
     # Create a new engine using existing engine_url (multiprocess requires separate engine)
     engine = create_engine(engine_url)
     # latest fnn_date for ts code
