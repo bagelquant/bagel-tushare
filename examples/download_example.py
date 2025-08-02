@@ -5,7 +5,7 @@ Download and update data example
 """
 
 from bageltushare import download, update_by_date, update_by_code
-from bageltushare import create_index, create_log_table, get_engine
+from bageltushare import create_index, create_all_tables, get_engine
 
 
 # configs
@@ -30,7 +30,7 @@ def main() -> None:
         "income",
     ]
 
-    create_log_table(ENGINE)
+    create_all_tables(ENGINE)
 
     # download and replace table
     download(engine=ENGINE, token=TOKEN, api_name="trade_cal")
