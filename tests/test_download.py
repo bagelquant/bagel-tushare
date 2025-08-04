@@ -4,7 +4,7 @@ from unittest import TestCase
 from sqlalchemy.engine import Engine
 
 from src.bageltushare.download import download
-from src.bageltushare import get_engine, create_log_table
+from src.bageltushare import get_engine, create_all_tables
 
 
 class TestDownload(TestCase):
@@ -21,8 +21,8 @@ class TestDownload(TestCase):
         self.update_by_date_api_name = "daily"
         self.update_by_ts_code_api_name = "balancesheet"
 
-        # create log table
-        create_log_table(self.engine)
+        # create all tables
+        create_all_tables(self.engine)
 
     def test_download(self):
         download(self.engine, self.token, self.download_api_name)

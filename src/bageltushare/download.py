@@ -192,10 +192,12 @@ def update_by_date(engine: Engine,
     # latest date in database
     latest_date = query_latest_trade_date_by_table_name(engine, api_name)
 
-    if not latest_date:
-        latest_date = datetime(2000, 1, 1)
-    else:
-        latest_date = latest_date + pd.Timedelta(days=1)
+    # Ensure latest_date and end_date are pandas Timestamps for comparison and arithmetic
+    latest_date = pd.to_datetime(latest_date) if latest_date is not None else pd.to_datetime('2000-01-01')
+    latest_date = latest_date + pd.Timedelta(days=1)
+
+    end_date = pd.to_datetime(end_date)
+
     if end_date < latest_date:
         print(f'{api_name} already up to date')
         return
@@ -248,7 +250,6 @@ def _single_update_by_code(engine_url: str,
     :param retry: Number of retry attempts in case of failure. Defaults to 3.
     :return: None
     """
-    print(f"Updating {api_name} for {ts_code}")
     # Create a new engine using existing engine_url (multiprocess requires separate engine)
     engine = create_engine(engine_url)
     # latest fnn_date for ts code
@@ -256,9 +257,11 @@ def _single_update_by_code(engine_url: str,
     if latest_f_ann_date is None:
         start_date = "20000101"
     else:
-        # latest_f_ann_date + 1 day, then convert to str
+        # Ensure latest_f_ann_date is pandas Timestamp for + operator
+        latest_f_ann_date = pd.to_datetime(latest_f_ann_date)
         start_date = (latest_f_ann_date + pd.Timedelta(days=1)).strftime("%Y%m%d")
 
+    print(f"Updating {api_name} for {ts_code} from {start_date} to {end_date.strftime('%Y%m%d')}")
     try_count = 0
     if params is None:
         params = {}
@@ -273,6 +276,7 @@ def _single_update_by_code(engine_url: str,
             df.to_sql(api_name, engine, if_exists="append", index=False)
             break
         except Exception as e:
+            print(f"Error downloading {api_name} for {ts_code}: {e}, retrying...")
             try_count += 1
             if try_count < retry:
                 sleep(60)
