@@ -20,16 +20,18 @@ The entry point of the download and update process.
     - it will multiprocess the `_update_single_code`
 """
 
+
 import pandas as pd
 from time import sleep
 from sqlalchemy.engine import Engine
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from datetime import datetime
 
 from .tushare_api import tushare_download
 from .database import insert_log
 from .queries import (query_trade_cal,
                       query_latest_f_ann_date_by_ts_code,
+                      query_latest_ann_date_by_ts_code,
                       query_latest_trade_date_by_table_name,
                       query_code_list)
 from concurrent.futures import ProcessPoolExecutor
@@ -90,13 +92,20 @@ def download(engine: Engine,
 
 
         # Compare columns for new rows
-        if api_name == 'stock_basic' or 'ts_code' in df_new.columns:
+        if api_name == 'stock_basic':
+            compare_cols = ['ts_code']
+        elif 'ts_code' in df_new.columns and 'trade_date' in df_new.columns:
+            compare_cols = ['ts_code', 'trade_date']
+        elif 'ts_code' in df_new.columns:
             compare_cols = ['ts_code']
         else:
             compare_cols = df_new.columns.tolist()
+
         if not df_existing.empty:
-            merged = df_new.merge(df_existing, on=compare_cols, how='left', indicator=True)
-            df_to_insert = merged[merged['_merge'] == 'left_only'].drop(columns=['_merge'])
+            merged = df_new.merge(df_existing, on=compare_cols, how='left', indicator=True, suffixes=('', '_dup'))
+            df_to_insert = merged[merged['_merge'] == 'left_only']
+            # Only keep columns from df_new (original columns, not _dup)
+            df_to_insert = df_to_insert[df_new.columns]
         else:
             df_to_insert = df_new
 
@@ -237,7 +246,8 @@ def _single_update_by_code(engine_url: str,
                            end_date: datetime,
                            params: dict | None = None,
                            fields: list[str] | None = None,
-                           retry: int = 3) -> None:
+                           retry: int = 3,
+                           date_field: str | None = None) -> None:
     """
     Updates a single stock code entry for a given API by downloading the associated
     data and saving it to the database. Retries the operation in case of failure
@@ -254,16 +264,26 @@ def _single_update_by_code(engine_url: str,
     """
     # Create a new engine using existing engine_url (multiprocess requires separate engine)
     engine = create_engine(engine_url)
-    # latest fnn_date for ts code
-    latest_f_ann_date = query_latest_f_ann_date_by_ts_code(engine, table_name=api_name, ts_code=ts_code)
-    if latest_f_ann_date is None:
+
+    # Determine latest date for this code using the selected date_field
+    if date_field == 'f_ann_date':
+        latest_date = query_latest_f_ann_date_by_ts_code(engine, table_name=api_name, ts_code=ts_code)
+    elif date_field == 'ann_date':
+        latest_date = query_latest_ann_date_by_ts_code(engine, table_name=api_name, ts_code=ts_code)
+    elif date_field == 'trade_date':
+        with engine.connect() as conn:
+            result = conn.execute(text(f"SELECT MAX(trade_date) FROM {api_name} WHERE ts_code = :ts_code"), {"ts_code": ts_code})
+            latest_date = result.scalar()
+    else:
+        latest_date = None
+
+    if latest_date is None:
         start_date = START_DATE
     else:
-        # Ensure latest_f_ann_date is pandas Timestamp for + operator
-        latest_f_ann_date = pd.to_datetime(latest_f_ann_date)
-        start_date = (latest_f_ann_date + pd.Timedelta(days=1)).strftime("%Y%m%d")
+        latest_date = pd.to_datetime(latest_date)
+        start_date = (latest_date + pd.Timedelta(days=1)).strftime("%Y%m%d")
 
-    print(f'Updating {api_name} for {ts_code} from {start_date} to {end_date.strftime('%Y%m%d')}')
+    print(f'Updating {api_name} for {ts_code} from {start_date} to {end_date.strftime('%Y%m%d')} (using {date_field})')
     try_count = 0
     if params is None:
         params = {}
@@ -318,7 +338,26 @@ def update_by_code(engine: Engine,
     # get codes from database
     codes = query_code_list(engine)
 
-    print(f'Start updating {api_name} to {end_date}')
+    # Determine which date field to use for incremental update (once per table)
+    with engine.connect() as conn:
+        result = conn.execute(text(f"SELECT * FROM {api_name} LIMIT 1"))
+        row = result.fetchone()
+        if row is not None:
+            columns = result.keys()
+        else:
+            columns = []
+
+        # Priority: f_ann_date > ann_date > trade_date
+        if 'f_ann_date' in columns:
+            date_field = 'f_ann_date'
+        elif 'ann_date' in columns:
+            date_field = 'ann_date'
+        elif 'trade_date' in columns:
+            date_field = 'trade_date'
+        else:
+            date_field = None
+
+    print(f'Start updating {api_name} to {end_date} (using {date_field})')
 
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         engine_urls = [engine.url for _ in codes]
@@ -327,16 +366,18 @@ def update_by_code(engine: Engine,
         params_list = [params for _ in codes]
         fields_list = [fields for _ in codes]
         retries = [retry for _ in codes]
+        date_fields = [date_field for _ in codes]
 
         results = list(executor.map(_single_update_by_code,
-                               engine_urls,
-                               tokens,
-                               api_names,
-                               codes,
-                               [end_date for _ in codes],
-                               params_list,
-                               fields_list,
-                               retries,
+                                   engine_urls,
+                                   tokens,
+                                   api_names,
+                                   codes,
+                                   [end_date for _ in codes],
+                                   params_list,
+                                   fields_list,
+                                   retries,
+                                   date_fields
         ))
 
     print(f'Finished updating {api_name} to {end_date}')

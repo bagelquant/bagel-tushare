@@ -70,6 +70,29 @@ def query_latest_f_ann_date_by_ts_code(engine: Engine,
         return None
 
 
+def query_latest_ann_date_by_ts_code(engine: Engine,
+                                     table_name: str,
+                                     ts_code: str) -> datetime | None:
+    """
+    Queries the latest announcement date (ann_date) for a given ts_code from a specified table.
+
+    :param engine: SQLAlchemy Engine instance used to connect to the database.
+    :param table_name: The name of the table to query.
+    :param ts_code: The ts_code to filter the query.
+    :return: The latest ann_date for the given ts_code, or None if not found or error.
+    """
+    query = text(f"""
+    SELECT MAX(ann_date) as latest_date
+    FROM {table_name}
+    WHERE ts_code = :ts_code
+    """)
+    try:
+        with engine.connect() as conn:
+            latest_date: datetime = conn.execute(query, {"ts_code": ts_code}).fetchone()[0]  # type: ignore
+            return latest_date if latest_date else None
+    except ProgrammingError:
+        return None
+
 def query_latest_trade_date_by_ts_code(engine: Engine,
                                        table_name: str,
                                        ts_code: str) -> datetime | None:
