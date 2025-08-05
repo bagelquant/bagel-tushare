@@ -68,9 +68,9 @@ def main() -> None:
              ])
 
     # Suggestion: update daily
-    # for api in by_date_apis:
-    #     update_by_date(engine=ENGINE, token=TOKEN, api_name=api)
-    #     create_index(engine=ENGINE, table_name=api)
+    for api in by_date_apis:
+        update_by_date(engine=ENGINE, token=TOKEN, api_name=api)
+        create_index(engine=ENGINE, table_name=api)
 
     # Suggestion: update monthly or quarterly, these tables normally do not change frequently
     # Example: update balancesheet, cashflow, income
