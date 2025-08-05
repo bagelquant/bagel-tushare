@@ -26,7 +26,6 @@ from sqlalchemy.engine import Engine
 from sqlalchemy import create_engine
 from datetime import datetime
 
-
 from .tushare_api import tushare_download
 from .database import insert_log
 from .queries import (query_trade_cal,
@@ -34,6 +33,9 @@ from .queries import (query_trade_cal,
                       query_latest_trade_date_by_table_name,
                       query_code_list)
 from concurrent.futures import ProcessPoolExecutor
+
+
+START_DATE = '20000101'  # default start date for data download
 
 
 def _convert_date_column(df: pd.DataFrame) -> pd.DataFrame:
@@ -49,7 +51,7 @@ def _convert_date_column(df: pd.DataFrame) -> pd.DataFrame:
         datetime format.
     :return: A DataFrame with the specified columns converted to datetime format.
     """
-    date_columns = ["trade_date", "cal_date", "pretrade_date", "ann_date", "f_ann_date", "end_date"]
+    date_columns = ['trade_date', 'cal_date', 'pretrade_date', 'ann_date', 'f_ann_date', 'end_date']
     for col in date_columns:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col])
@@ -88,23 +90,23 @@ def download(engine: Engine,
 
 
         # Compare columns for new rows
-        if api_name == "stock_basic" and "ts_code" in df_new.columns:
-            compare_cols = ["ts_code"]
+        if api_name == 'stock_basic' or 'ts_code' in df_new.columns:
+            compare_cols = ['ts_code']
         else:
             compare_cols = df_new.columns.tolist()
         if not df_existing.empty:
-            merged = df_new.merge(df_existing, on=compare_cols, how="left", indicator=True)
-            df_to_insert = merged[merged["_merge"] == "left_only"].drop(columns=["_merge"])
+            merged = df_new.merge(df_existing, on=compare_cols, how='left', indicator=True)
+            df_to_insert = merged[merged['_merge'] == 'left_only'].drop(columns=['_merge'])
         else:
             df_to_insert = df_new
 
         if not df_to_insert.empty:
-            df_to_insert.to_sql(api_name, engine, if_exists="append", index=False)
-            print(f"Inserted {len(df_to_insert)} new rows into {api_name}")
+            df_to_insert.to_sql(api_name, engine, if_exists='append', index=False)
+            print(f'Inserted {len(df_to_insert)} new rows into {api_name}')
         else:
-            print(f"No new rows to insert for {api_name}")
+            print(f'No new rows to insert for {api_name}')
     except Exception as e:
-        error_msg = f"Error downloading {api_name}: {e}"
+        error_msg = f'Error downloading {api_name}: {e}'
         insert_log(engine, table_name=api_name, message=error_msg)
 
         # retry in 60s
@@ -112,7 +114,7 @@ def download(engine: Engine,
             sleep(60)
             download(engine, token, api_name, params, fields, retry)
         else:
-            print(f"Error downloading {api_name}, retry {retry} times, stop retrying")
+            print(f'Error downloading {api_name}, retry {retry} times, stop retrying')
 
 
 def _single_date_update(engine_url: str,
@@ -136,30 +138,30 @@ def _single_date_update(engine_url: str,
     :param retry: Number of retry attempts in case of failure. Defaults to 3.
     :return: None
     """
-    print(f"Updating {api_name} for {trade_date}")
+    print(f'Updating {api_name} for {trade_date}')
     # create a new engine using existing engine (multiprocess needs separate engine)
     engine = create_engine(engine_url)
 
     if params is None:
         params = {}
-    params["trade_date"] = trade_date.strftime("%Y%m%d")
+    params['trade_date'] = trade_date.strftime('%Y%m%d')
 
     try_count = 0
     while try_count < retry:
         try:
             df = tushare_download(token, api_name, params, fields)
             df = _convert_date_column(df)  # type: ignore
-            df.to_sql(api_name, engine, if_exists="append", index=False)
+            df.to_sql(api_name, engine, if_exists='append', index=False)
             break
         except Exception as e:
-            print(f"Error downloading {api_name} for {trade_date}: {e}, retrying...")
+            print(f'Error downloading {api_name} for {trade_date}: {e}, retrying...')
             try_count += 1
             if try_count < retry:
                 sleep(60)
             else:
-                error_msg = f"Error downloading {api_name} for {trade_date}: {e}"
+                error_msg = f'Error downloading {api_name} for {trade_date}: {e}'
                 insert_log(engine, table_name=api_name, message=error_msg)
-                print(f"Error downloading {api_name} for {trade_date}, retried {retry} times, giving up.")
+                print(f'Error downloading {api_name} for {trade_date}, retried {retry} times, giving up.')
         finally:
             engine.dispose()
 
@@ -193,7 +195,7 @@ def update_by_date(engine: Engine,
     latest_date = query_latest_trade_date_by_table_name(engine, api_name)
 
     # Ensure latest_date and end_date are pandas Timestamps for comparison and arithmetic
-    latest_date = pd.to_datetime(latest_date) if latest_date is not None else pd.to_datetime('2000-01-01')
+    latest_date = pd.to_datetime(latest_date) if latest_date is not None else pd.to_datetime(START_DATE)
     latest_date = latest_date + pd.Timedelta(days=1)
 
     end_date = pd.to_datetime(end_date)
@@ -255,35 +257,35 @@ def _single_update_by_code(engine_url: str,
     # latest fnn_date for ts code
     latest_f_ann_date = query_latest_f_ann_date_by_ts_code(engine, table_name=api_name, ts_code=ts_code)
     if latest_f_ann_date is None:
-        start_date = "20000101"
+        start_date = START_DATE
     else:
         # Ensure latest_f_ann_date is pandas Timestamp for + operator
         latest_f_ann_date = pd.to_datetime(latest_f_ann_date)
         start_date = (latest_f_ann_date + pd.Timedelta(days=1)).strftime("%Y%m%d")
 
-    print(f"Updating {api_name} for {ts_code} from {start_date} to {end_date.strftime('%Y%m%d')}")
+    print(f'Updating {api_name} for {ts_code} from {start_date} to {end_date.strftime('%Y%m%d')}')
     try_count = 0
     if params is None:
         params = {}
-    params["ts_code"] = ts_code
-    params["start_date"] = start_date
-    params["end_date"] = end_date.strftime("%Y%m%d")
+    params['ts_code'] = ts_code
+    params['start_date'] = start_date
+    params['end_date'] = end_date.strftime('%Y%m%d')
 
     while try_count <= retry:
         try:
             df = tushare_download(token, api_name, params, fields)
             df = _convert_date_column(df)  # type: ignore
-            df.to_sql(api_name, engine, if_exists="append", index=False)
+            df.to_sql(api_name, engine, if_exists='append', index=False)
             break
         except Exception as e:
-            print(f"Error downloading {api_name} for {ts_code}: {e}, retrying...")
+            print(f'Error downloading {api_name} for {ts_code}: {e}, retrying...')
             try_count += 1
             if try_count < retry:
                 sleep(60)
             else:
-                error_msg = f"Error downloading {api_name} for {ts_code}: {e}"
+                error_msg = f'Error downloading {api_name} for {ts_code}: {e}'
                 insert_log(engine, api_name, error_msg)
-                print(f"Error downloading {api_name} for {ts_code}, retried {retry} times, giving up.")
+                print(f'Error downloading {api_name} for {ts_code}, retried {retry} times, giving up.')
         finally:
             engine.dispose()
 
@@ -338,10 +340,3 @@ def update_by_code(engine: Engine,
         ))
 
     print(f'Finished updating {api_name} to {end_date}')
-
-
-
-
-
-
-

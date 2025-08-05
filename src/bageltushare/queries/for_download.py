@@ -29,10 +29,10 @@ def query_latest_trade_date_by_table_name(engine: Engine,
     :param table_name: The name of the table to query.
     :return: The latest trade_date.
     """
-    query = text(f"SELECT MAX(trade_date) as latest_date FROM {table_name}")
+    query = text(f'SELECT MAX(trade_date) as latest_date FROM {table_name}')
     try:
         with engine.connect() as conn:
-            latest_date: datetime = conn.execute(query).fetchone()[0]
+            latest_date: datetime = conn.execute(query).fetchone()[0]  # type: ignore
             return latest_date if latest_date else None
     except ProgrammingError:
         # table not created yet
@@ -64,7 +64,7 @@ def query_latest_f_ann_date_by_ts_code(engine: Engine,
     """)
     try:
         with engine.connect() as conn:
-            latest_date: datetime = conn.execute(query).fetchone()[0]
+            latest_date: datetime = conn.execute(query).fetchone()[0]  # type: ignore
             return latest_date if latest_date else None
     except ProgrammingError:
         return None
@@ -84,8 +84,8 @@ def query_latest_trade_date_by_ts_code(engine: Engine,
     query = text(f"SELECT MAX(trade_date) as latest_date FROM {table_name} WHERE ts_code = {ts_code}")
     try:
         with engine.connect() as conn:
-            latest_date: datetime = conn.execute(query, {"ts_code": ts_code}).fetchone()[0]
-            print(f"Latest trade date for {ts_code}: {latest_date}, table: {table_name}, ts_code: {ts_code}")
+            latest_date: datetime = conn.execute(query, {"ts_code": ts_code}).fetchone()[0]  # type: ignore
+            print(f'Latest trade date for {ts_code}: {latest_date}, table: {table_name}, ts_code: {ts_code}')
             return latest_date if latest_date else None
     except ProgrammingError:
         return None
@@ -129,7 +129,7 @@ def query_code_list(engine: Engine) -> list[str]:
     :param engine: The SQLAlchemy Engine instance for connecting to the database.
     :return: A list of stock codes extracted from the `stock_basic` table.
     """
-    query = text("SELECT ts_code FROM stock_basic")
+    query = text('SELECT ts_code FROM stock_basic')
     with engine.connect() as conn:
         ts_codes = conn.execute(query).fetchall()
         return [_[0] for _ in ts_codes] if ts_codes else []

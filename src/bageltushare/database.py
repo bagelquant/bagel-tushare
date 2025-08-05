@@ -21,7 +21,7 @@ def get_engine(host: str,
                user: str,
                password: str,
                database: str) -> Engine:
-    return create_engine(f"mysql+pymysql://{user}:{password}@{host}:{port}/{database}")
+    return create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{database}')
 
 
 class Log(Base):
