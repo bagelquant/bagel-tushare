@@ -32,5 +32,5 @@ def tushare_download(token: str,
     if params is None:
         params = {}
     if fields is not None:
-        params["fields"] = ",".join(fields)
+        params['fields'] = ','.join(fields)
     return pro.query(api_name, **params)
