@@ -63,6 +63,7 @@ class TradeCal(Base):
 class Daily(Base):
     __tablename__ = 'daily'
     __table_args__ = (
+        Index('idx_daily_ts_code_trade_date', 'ts_code', 'trade_date'),
         Index('idx_daily_ts_code', 'ts_code'),
         Index('idx_daily_trade_date', 'trade_date'),
     )
@@ -82,6 +83,7 @@ class Daily(Base):
 class AdjFactor(Base):
     __tablename__ = 'adj_factor'
     __table_args__ = (
+        Index('idx_adjfactor_ts_code_trade_date', 'ts_code', 'trade_date'),
         Index('idx_adjfactor_ts_code', 'ts_code'),
         Index('idx_adjfactor_trade_date', 'trade_date'),
     )
@@ -93,6 +95,7 @@ class AdjFactor(Base):
 class DailyBasic(Base):
     __tablename__ = 'daily_basic'
     __table_args__ = (
+        Index('idx_dailybasic_ts_code_trade_date', 'ts_code', 'trade_date'),
         Index('idx_dailybasic_ts_code', 'ts_code'),
         Index('idx_dailybasic_trade_date', 'trade_date'),
     )
@@ -119,8 +122,9 @@ class DailyBasic(Base):
 class Income(Base):
     __tablename__ = 'income'
     __table_args__ = (
+        Index('idx_income_ts_code_f_ann_date', 'ts_code', 'f_ann_date'),
         Index('idx_income_ts_code', 'ts_code'),
-        Index('idx_income_end_date', 'end_date'),
+        Index('idx_income_f_ann_date', 'f_ann_date'),
     )
     id = Column(Integer, primary_key=True, autoincrement=True)
     ts_code = Column(String(20))
@@ -221,8 +225,9 @@ class Income(Base):
 class BalanceSheet(Base):
     __tablename__ = 'balancesheet'
     __table_args__ = (
+        Index('idx_balancesheet_ts_code_f_ann_date', 'ts_code', 'f_ann_date'),
         Index('idx_balancesheet_ts_code', 'ts_code'),
-        Index('idx_balancesheet_end_date', 'end_date'),
+        Index('idx_balancesheet_f_ann_date', 'f_ann_date'),
     )
     id = Column(Integer, primary_key=True, autoincrement=True)
     ts_code = Column(String(20))
@@ -388,8 +393,9 @@ class BalanceSheet(Base):
 class Cashflow(Base):
     __tablename__ = 'cashflow'
     __table_args__ = (
+        Index('idx_cashflow_ts_code_f_ann_date', 'ts_code', 'f_ann_date'),
         Index('idx_cashflow_ts_code', 'ts_code'),
-        Index('idx_cashflow_end_date', 'end_date'),
+        Index('idx_cashflow_f_ann_date', 'f_ann_date'),
     )
     id = Column(Integer, primary_key=True, autoincrement=True)
     ts_code = Column(String(20))
@@ -494,8 +500,9 @@ class Cashflow(Base):
 class FinaIndicator(Base):
     __tablename__ = 'fina_indicator'
     __table_args__ = (
+        Index('idx_finaindicator_ts_code_ann_date', 'ts_code', 'ann_date'),
         Index('idx_finaindicator_ts_code', 'ts_code'),
-        Index('idx_finaindicator_end_date', 'end_date'),
+        Index('idx_finaindicator_ann_date', 'ann_date'),
     )
     id = Column(Integer, primary_key=True, autoincrement=True)
     ts_code = Column(String(20))
@@ -693,7 +700,7 @@ def create_index(engine: Engine,
     :param table_name: The name of the table on which the index will be created.
     :return: None
     """
-    index_list = ['trade_date', 'f_ann_date', 'end_date', 'ts_code']
+    index_list = ['trade_date', 'f_ann_date', 'ann_date', 'ts_code']
     # get columns
     query_columns = f"""
     SELECT COLUMN_NAME 
