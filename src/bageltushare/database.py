@@ -64,7 +64,6 @@ class Daily(Base):
     __tablename__ = 'daily'
     __table_args__ = (
         Index('idx_daily_ts_code_trade_date', 'ts_code', 'trade_date'),
-        Index('idx_daily_ts_code', 'ts_code'),
         Index('idx_daily_trade_date', 'trade_date'),
     )
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -84,7 +83,6 @@ class AdjFactor(Base):
     __tablename__ = 'adj_factor'
     __table_args__ = (
         Index('idx_adjfactor_ts_code_trade_date', 'ts_code', 'trade_date'),
-        Index('idx_adjfactor_ts_code', 'ts_code'),
         Index('idx_adjfactor_trade_date', 'trade_date'),
     )
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -96,7 +94,6 @@ class DailyBasic(Base):
     __tablename__ = 'daily_basic'
     __table_args__ = (
         Index('idx_dailybasic_ts_code_trade_date', 'ts_code', 'trade_date'),
-        Index('idx_dailybasic_ts_code', 'ts_code'),
         Index('idx_dailybasic_trade_date', 'trade_date'),
     )
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -123,7 +120,6 @@ class Income(Base):
     __tablename__ = 'income'
     __table_args__ = (
         Index('idx_income_ts_code_f_ann_date', 'ts_code', 'f_ann_date'),
-        Index('idx_income_ts_code', 'ts_code'),
         Index('idx_income_f_ann_date', 'f_ann_date'),
     )
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -226,7 +222,6 @@ class BalanceSheet(Base):
     __tablename__ = 'balancesheet'
     __table_args__ = (
         Index('idx_balancesheet_ts_code_f_ann_date', 'ts_code', 'f_ann_date'),
-        Index('idx_balancesheet_ts_code', 'ts_code'),
         Index('idx_balancesheet_f_ann_date', 'f_ann_date'),
     )
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -394,7 +389,6 @@ class Cashflow(Base):
     __tablename__ = 'cashflow'
     __table_args__ = (
         Index('idx_cashflow_ts_code_f_ann_date', 'ts_code', 'f_ann_date'),
-        Index('idx_cashflow_ts_code', 'ts_code'),
         Index('idx_cashflow_f_ann_date', 'f_ann_date'),
     )
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -501,7 +495,6 @@ class FinaIndicator(Base):
     __tablename__ = 'fina_indicator'
     __table_args__ = (
         Index('idx_finaindicator_ts_code_ann_date', 'ts_code', 'ann_date'),
-        Index('idx_finaindicator_ts_code', 'ts_code'),
         Index('idx_finaindicator_ann_date', 'ann_date'),
     )
     id = Column(Integer, primary_key=True, autoincrement=True)
